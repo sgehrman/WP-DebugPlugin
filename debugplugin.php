@@ -8,15 +8,11 @@
   Description: Random Debug stuff
  */
 
-
 // This is the secret key for API authentication. You configured it in the settings menu of the license manager plugin.
 define('YOUR_SPECIAL_SECRET_KEY', '56b458f3613364.08018088'); //Rename this constant name so it is specific to your plugin or theme.
 
 // This is the URL where API query request will be sent to. This should be the URL of the site where you have installed the main license manager plugin. Get this value from the integration help page.
 define('YOUR_LICENSE_SERVER_URL', 'http://127.0.0.1/cocoatech'); //Rename this constant name so it is specific to your plugin or theme.
-
-// This is a value that will be recorded in the license manager data so you can identify licenses for this item/product.
-define('YOUR_ITEM_REFERENCE', '????'); //Rename this constant name so it is specific to your plugin or theme.
 
 add_action('admin_menu', 'slm_sample_license_menu');
 
@@ -43,7 +39,7 @@ function sample_license_management_page() {
 
     $lic = new youlice_class($license_key , YOUR_LICENSE_SERVER_URL , YOUR_SPECIAL_SECRET_KEY );
     if($lic->is_licensed()){
-        echo 'Thank You Phurchasing!';
+        echo 'Thank You for Purchasing!';
     }else{
         ?>
         <form action="" method="post">
