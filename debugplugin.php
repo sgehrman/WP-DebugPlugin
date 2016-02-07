@@ -24,14 +24,15 @@ function license_management_page()
 {
     echo '<div class="wrap">';
     echo '<h2>License Manager</h2>';
+    echo '<h3>' . get_option($savedLicenseKey) . '</h3>';
+
+    $lic = new LicenseManager(YOUR_LICENSE_SERVER_URL, YOUR_SPECIAL_SECRET_KEY);
 
     // License activate button was clicked
     if (isset($_REQUEST['activate_license'])) {
         $license_key = $_REQUEST['input_license_key'];
 
-        // Send query to the license manager server
-        $lic = new LicenseManager($license_key, YOUR_LICENSE_SERVER_URL, YOUR_SPECIAL_SECRET_KEY);
-        if ($lic->active()) {
+        if ($lic->active($license_key)) {
             echo 'You license Activated successfuly';
         } else {
             echo $lic->err;
@@ -42,16 +43,13 @@ function license_management_page()
     if (isset($_REQUEST['deactivate_license'])) {
         $license_key = $_REQUEST['input_license_key'];
 
-        // Send query to the license manager server
-        $lic = new LicenseManager($license_key, YOUR_LICENSE_SERVER_URL, YOUR_SPECIAL_SECRET_KEY);
-        if ($lic->active()) {
-            echo 'You license Activated successfuly';
+        if ($lic->active($license_key)) {
+            echo 'You license Deactivated successfuly';
         } else {
             echo $lic->err;
         }
     }
 
-    $lic = new LicenseManager($license_key, YOUR_LICENSE_SERVER_URL, YOUR_SPECIAL_SECRET_KEY);
     if ($lic->is_licensed()) {
         echo 'Thank You for Purchasing!';
 
@@ -60,11 +58,11 @@ function license_management_page()
             <table class="form-table">
                 <tr>
                     <th style="width:100px;"><label for="input_license_key">License Key</label></th>
-                    <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value="<?php echo get_option($savedLicenseKey); ?>" ></td>
+                    <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value="<? echo get_option($savedLicenseKey); ?>" ></td>
                 </tr>
             </table>
             <p class="submit">
-                <input type="submit" name="activate_license" value="Deactivate" class="button-primary" />
+                <input type="submit" name="deactivate_license" value="Deactivate" class="button-primary" />
             </p>
         </form>
         <?
@@ -74,7 +72,7 @@ function license_management_page()
             <table class="form-table">
                 <tr>
                     <th style="width:100px;"><label for="input_license_key">License Key</label></th>
-                    <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value="<?php echo get_option($savedLicenseKey); ?>" ></td>
+                    <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value="<? echo get_option($savedLicenseKey); ?>" ></td>
                 </tr>
             </table>
             <p class="submit">
@@ -100,17 +98,15 @@ function logg($data)
 
 class LicenseManager
 {
-    public $license;
     public $server;
     public $api_key;
     private $product_id = 'My_product_name_OR_ID';
     public $err;
 
-    public function __construct($license, $server, $api_key)
+    public function __construct($server, $api_key)
     {
         $this->server  = $server;
         $this->api_key = $api_key;
-        $this->license = $license;
     }
 
     public function is_licensed()
@@ -123,9 +119,9 @@ class LicenseManager
         return false;
     }
 
-    public function active()
+    public function active($license_key)
     {
-        $url      = $this->server . '/?secret_key=' . $this->api_key . '&slm_action=slm_activate&license_key=' . $this->license . '&registered_domain=' . get_bloginfo('siteurl') . '&item_reference=' . $this->product_id;
+        $url      = $this->server . '/?secret_key=' . $this->api_key . '&slm_action=slm_activate&license_key=' . $license_key . '&registered_domain=' . get_bloginfo('siteurl') . '&item_reference=' . $this->product_id;
         $response = wp_remote_get($url, array('timeout' => 20, 'sslverify' => false));
 
         if (is_array($response)) {
@@ -144,7 +140,7 @@ class LicenseManager
 
     }
 
-    public function deactivate()
+    public function deactivate($license_key)
     {
 
     }
