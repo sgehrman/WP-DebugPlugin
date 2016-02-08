@@ -18,12 +18,6 @@ function slm_sample_license_menu()
     add_options_page('License Manager Menu', 'License Manager', 'manage_options', 'license_management_menu_id', 'license_management_page');
 }
 
-function license_option_key()
-{
-    // there's no globals in PHP? so using a fucking function instead.
-    return 'license_key';
-}
-
 function license_management_page()
 {
     echo '<div class="wrap">';
@@ -40,6 +34,11 @@ function license_management_page()
     echo checkForm();
 
     echo createForm();
+
+
+echo '<p>' . getSavedData() . '</p><hr/>';
+
+
     dumpShit();
 
     echo '</div>';
@@ -123,6 +122,10 @@ function recursiveLogg($data, $appendTo)
     return $appendTo . $output;
 }
 
+// -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
+// License Manager
+
 class LicenseManager
 {
     public $server;
@@ -136,16 +139,6 @@ class LicenseManager
         $this->server              = $server;
         $this->api_key             = $api_key;
         $this->creation_secret_key = $creation_secret_key;
-    }
-
-    public function is_licensed()
-    {
-        $lic = get_option(license_option_key());
-        if (!empty($lic)) {
-            return true;
-        }
-
-        return false;
     }
 
     public function check($licenseKey)
@@ -166,8 +159,7 @@ class LicenseManager
         }
 
         if ($license_data->result == 'success') {
-
-            logg($license_data);
+            savedData($license_data);
 
             return true;
         } else {
@@ -201,7 +193,10 @@ class LicenseManager
             $license_data = json_decode(wp_remote_retrieve_body($response));
 
             if ($license_data->result == 'success') {
-                update_option(license_option_key(), $license_data->key);
+                saveLicense($license_data->key);
+
+                savedData($license_data);
+
                 return true;
             } else {
                 $this->err = $license_data->message;
@@ -231,7 +226,7 @@ class LicenseManager
             $license_data = json_decode(wp_remote_retrieve_body($response));
 
             if ($license_data->result == 'success') {
-                update_option(license_option_key(), $licenseKey);
+                saveLicense($licenseKey);
                 return true;
             } else {
                 $this->err = $license_data->message;
@@ -260,7 +255,7 @@ class LicenseManager
             $license_data = json_decode(wp_remote_retrieve_body($response));
 
             if ($license_data->result == 'success') {
-                update_option(license_option_key(), '');
+                saveLicense('');
                 return true;
             } else {
                 $this->err = $license_data->message;
@@ -273,11 +268,12 @@ class LicenseManager
 }
 
 // -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 // html
 
 function activateForm()
 {
-    $licenseKey = get_option(license_option_key());
+    $licenseKey = getSavedLicense();
 
     $html = <<<HTML
 
@@ -299,7 +295,7 @@ HTML;
 
 function deactivateForm()
 {
-    $licenseKey = get_option(license_option_key());
+    $licenseKey = getSavedLicense();
 
     $html = <<<HTML
 
@@ -362,7 +358,7 @@ HTML;
 
 function checkForm()
 {
-    $licenseKey = get_option(license_option_key());
+    $licenseKey = getSavedLicense();
 
     $html = <<<HTML
 
@@ -391,4 +387,43 @@ function dumpShit()
     echo 'The Network Home URL is: ' . $site_url . '\n';
     echo 'The Network Home Name is: ' . $site_title . '\n';
     echo 'The Network Home Tagline is: ' . $site_description . '\n';
+}
+
+// -------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
+// constants
+
+function license_option_key()
+{
+    // there's no globals in PHP? so using a fucking function instead.
+    return 'license_key';
+}
+
+function data_option_key()
+{
+    // there's no globals in PHP? so using a fucking function instead.
+    return 'data_key';
+}
+
+function getSavedLicense()
+{
+    return get_option(license_option_key());
+}
+
+function getSavedData()
+{
+    return get_option(data_option_key());
+}
+
+function saveLicense($license)
+{
+    update_option(license_option_key(), $license);
+}
+
+function savedData($data)
+{
+    // convert to string
+        $result = recursiveLogg($data, "");
+
+    update_option(data_option_key(), $result);
 }
