@@ -35,11 +35,9 @@ function license_management_page()
 
     handleButtonClicks($lic);
 
-    if ($lic->is_licensed()) {
-        echo deactivateForm();
-    } else {
-        echo activateForm();
-    }
+    echo activateForm();
+    echo deactivateForm();
+    echo checkForm();
 
     echo createForm();
     dumpShit();
@@ -80,26 +78,49 @@ function handleButtonClicks($lic)
         } else {
             echo $lic->err;
         }
+    } else if (isset($_REQUEST['check_license'])) {
+        // License deactivate button was clicked
+        $licenseKey = $_REQUEST['input_license_key'];
+
+        if ($lic->check($licenseKey)) {
+            echo 'You license Checked successfully';
+        } else {
+            echo $lic->err;
+        }
     }
 }
 
 function logg($data)
 {
-    if (is_array($data)) {
-        $output = "<script>alert( 'Loga: " . implode(',', $data) . "' );</script>";
-    } else if (is_object($data)) {
-        $duh = 'OK: ';
-        foreach ($data as $key => $value) {
-            $duh = $duh . "$key => $value, ";
+    $result = recursiveLogg($data, "");
+
+    echo "<script>alert( 'Loga: " . $result . "' );</script>";
+}
+
+function recursiveLogg($data, $appendTo)
+{
+    if (is_string($data)) {
+        $output = $data;
+    } else if (is_array($data)) {
+        $output = 'ARY: ';
+
+        foreach ($data as $value) {
+            $value = recursiveLogg($value, '');
+
+            $output = $output . "$value, ";
         }
-        $output = "<script>alert( 'Logo: " . $duh . "' );</script>";
-    } else if (is_string($data)) {
-        $output = "<script>alert( 'Logs: " . $data . "' );</script>";
+    } else if (is_object($data)) {
+        $output = 'OBJ: ';
+        foreach ($data as $key => $value) {
+            $value = recursiveLogg($value, '');
+
+            $output = $output . "$key => $value, ";
+        }
     } else {
-        $output = "<script>alert( 'Log?: " . gettype($data) . "' );</script>";
+        $output = gettype($data);
     }
 
-    echo $output;
+    return $appendTo . $output;
 }
 
 class LicenseManager
@@ -146,6 +167,8 @@ class LicenseManager
 
         if ($license_data->result == 'success') {
 
+            logg($license_data);
+
             return true;
         } else {
             $this->err = $license_data->message;
@@ -164,7 +187,7 @@ class LicenseManager
             'email'               => $email,
             'company_name'        => $company,
             'txn_id'              => 'ABC0987654321',
-            'max_allowed_domains' => numInstalls,
+            'max_allowed_domains' => $numInstalls,
             'date_created'        => date('Y-m-d'),
             'date_expiry'         => '',
         );
@@ -269,6 +292,7 @@ function activateForm()
                 <input type="submit" name="activate_license" value="Activate" class="button-primary" />
             </p>
         </form>
+        <hr/>
 HTML;
     return $html;
 }
@@ -290,6 +314,7 @@ function deactivateForm()
                 <input type="submit" name="deactivate_license" value="Deactivate" class="button-primary" />
             </p>
         </form>
+        <hr/>
 HTML;
     return $html;
 }
@@ -329,6 +354,30 @@ function createForm()
                 <input type="submit" name="create_license" value="Create License" class="button-primary" />
             </p>
         </form>
+
+        <hr/>
+HTML;
+    return $html;
+}
+
+function checkForm()
+{
+    $licenseKey = get_option(license_option_key());
+
+    $html = <<<HTML
+
+  <form action="" method="post">
+            <table class="form-table">
+                <tr>
+                    <th style="width:100px;"><label for="input_license_key">License Key</label></th>
+                    <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value=$licenseKey ></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="check_license" value="Check" class="button-primary" />
+            </p>
+        </form>
+        <hr/>
 HTML;
     return $html;
 }
@@ -339,7 +388,7 @@ function dumpShit()
     $site_url         = network_site_url('/');
     $site_description = get_bloginfo('description');
 
-    echo 'The Network Home URL is: ' . $site_url;
-    echo 'The Network Home Name is: ' . $site_title;
-    echo 'The Network Home Tagline is: ' . $site_description;
+    echo 'The Network Home URL is: ' . $site_url . '\n';
+    echo 'The Network Home Name is: ' . $site_title . '\n';
+    echo 'The Network Home Tagline is: ' . $site_description . '\n';
 }
