@@ -8,6 +8,11 @@ Author URI: http://distantfutu.re
 Description: Random Debug stuff
  */
 
+// Exit if accessed directly
+if( !defined( 'ABSPATH' ) ) {
+    exit;
+}
+
 define('CREATION_SECRET_KEY', 'www');
 define('YOUR_VERIFICATION_SECRET_KEY', '56b458f3613364.08018088');
 
@@ -35,11 +40,9 @@ function license_management_page()
 
     echo createForm();
 
+    echo '<p>' . getSavedData() . '</p><hr/>';
 
-echo '<p>' . getSavedData() . '</p><hr/>';
-
-
-    dumpShit();
+    showServerInfo();
 
     echo '</div>';
 }
@@ -49,8 +52,9 @@ function handleButtonClicks($lic)
     // License activate button was clicked
     if (isset($_REQUEST['activate_license'])) {
         $licenseKey = $_REQUEST['input_license_key'];
+        $domain     = $_REQUEST['input_domain_key'];
 
-        if ($lic->active($licenseKey)) {
+        if ($lic->activate($licenseKey, $domain)) {
             echo 'You license Activated successfully';
         } else {
             echo $lic->err;
@@ -58,8 +62,9 @@ function handleButtonClicks($lic)
     } else if (isset($_REQUEST['deactivate_license'])) {
         // License deactivate button was clicked
         $licenseKey = $_REQUEST['input_license_key'];
+        $domain     = $_REQUEST['input_domain_key'];
 
-        if ($lic->deactivate($licenseKey)) {
+        if ($lic->deactivate($licenseKey, $domain)) {
             echo 'You license Deactivated successfully';
         } else {
             echo $lic->err;
@@ -91,6 +96,8 @@ function handleButtonClicks($lic)
 
 function logg($data)
 {
+var_dump($data);
+
     $result = recursiveLogg($data, "");
 
     echo "<script>alert( 'Loga: " . $result . "' );</script>";
@@ -106,20 +113,20 @@ function recursiveLogg($data, $appendTo)
         foreach ($data as $value) {
             $value = recursiveLogg($value, '');
 
-            $output = $output . "$value, ";
+            $output = $output . "$value ";
         }
     } else if (is_object($data)) {
         $output = 'OBJ: ';
         foreach ($data as $key => $value) {
             $value = recursiveLogg($value, '');
 
-            $output = $output . "$key => $value, ";
+            $output = $output . "$key => $value ";
         }
     } else {
         $output = gettype($data);
     }
 
-    return $appendTo . $output;
+    return $appendTo . $output . '<br/>';
 }
 
 // -------------------------------------------------------------------------------
@@ -131,7 +138,7 @@ class LicenseManager
     public $server;
     public $api_key;
     public $creation_secret_key;
-    private $product_id = 'My_product_name_OR_ID';
+    private $product_id = 'product reference';
     public $err;
 
     public function __construct($server, $api_key, $creation_secret_key)
@@ -181,7 +188,7 @@ class LicenseManager
             'txn_id'              => 'ABC0987654321',
             'max_allowed_domains' => $numInstalls,
             'date_created'        => date('Y-m-d'),
-            'date_expiry'         => '',
+            'date_expiry'         => date('Y-m-d'),
         );
 
         $query    = add_query_arg($api_params, $this->server);
@@ -206,13 +213,13 @@ class LicenseManager
         return false;
     }
 
-    public function active($licenseKey)
+    public function activate($licenseKey, $domain)
     {
         $api_params = array(
             'slm_action'         => 'slm_activate',
             'secret_key'         => $this->api_key,
             'license_key'        => $licenseKey,
-            'registered_domain=' => $_SERVER['SERVER_NAME'], // get_bloginfo('siteurl'),
+            'registered_domain=' => $domain, // $_SERVER['SERVER_NAME'], // network_site_url('/'),
             'item_reference='    => urlencode($this->product_id),
         );
 
@@ -227,6 +234,9 @@ class LicenseManager
 
             if ($license_data->result == 'success') {
                 saveLicense($licenseKey);
+
+                savedData($license_data);
+
                 return true;
             } else {
                 $this->err = $license_data->message;
@@ -236,13 +246,13 @@ class LicenseManager
         return false;
     }
 
-    public function deactivate($licenseKey)
+    public function deactivate($licenseKey, $domain)
     {
         $api_params = array(
             'slm_action'         => 'slm_deactivate',
             'secret_key'         => $this->api_key,
             'license_key'        => $licenseKey,
-            'registered_domain=' => $_SERVER['SERVER_NAME'], // get_bloginfo('siteurl'),
+            'registered_domain=' => $domain, // $_SERVER['SERVER_NAME'], // network_site_url('/'),
             'item_reference='    => urlencode($this->product_id),
         );
 
@@ -255,7 +265,8 @@ class LicenseManager
             $license_data = json_decode(wp_remote_retrieve_body($response));
 
             if ($license_data->result == 'success') {
-                saveLicense('');
+                savedData($license_data);
+
                 return true;
             } else {
                 $this->err = $license_data->message;
@@ -274,6 +285,7 @@ class LicenseManager
 function activateForm()
 {
     $licenseKey = getSavedLicense();
+    $domain     = network_site_url('/');
 
     $html = <<<HTML
 
@@ -282,6 +294,10 @@ function activateForm()
                 <tr>
                     <th style="width:100px;"><label for="input_license_key">License Key</label></th>
                     <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value=$licenseKey ></td>
+                </tr>
+                <tr>
+                    <th style="width:100px;"><label for="input_domain_key">Domain</label></th>
+                    <td ><input class="regular-text" type="text" id="input_domain_key" name="input_domain_key"  value=$domain ></td>
                 </tr>
             </table>
             <p class="submit">
@@ -296,6 +312,7 @@ HTML;
 function deactivateForm()
 {
     $licenseKey = getSavedLicense();
+    $domain     = network_site_url('/');
 
     $html = <<<HTML
 
@@ -304,6 +321,10 @@ function deactivateForm()
                 <tr>
                     <th style="width:100px;"><label for="input_license_key">License Key</label></th>
                     <td ><input class="regular-text" type="text" id="input_license_key" name="input_license_key"  value=$licenseKey ></td>
+                </tr>
+                <tr>
+                    <th style="width:100px;"><label for="input_domain_key">Domain</label></th>
+                    <td ><input class="regular-text" type="text" id="input_domain_key" name="input_domain_key"  value=$domain ></td>
                 </tr>
             </table>
             <p class="submit">
@@ -378,15 +399,15 @@ HTML;
     return $html;
 }
 
-function dumpShit()
+function showServerInfo()
 {
     $site_title       = get_bloginfo('name');
     $site_url         = network_site_url('/');
     $site_description = get_bloginfo('description');
 
-    echo 'The Network Home URL is: ' . $site_url . '\n';
-    echo 'The Network Home Name is: ' . $site_title . '\n';
-    echo 'The Network Home Tagline is: ' . $site_description . '\n';
+    echo 'URL: ' . $site_url . '<br/>';
+    echo 'Name: ' . $site_title . '<br/>';
+    echo 'Tagline: ' . $site_description . '<br/>';
 }
 
 // -------------------------------------------------------------------------------
@@ -423,7 +444,7 @@ function saveLicense($license)
 function savedData($data)
 {
     // convert to string
-        $result = recursiveLogg($data, "");
+    $result = recursiveLogg($data, "");
 
     update_option(data_option_key(), $result);
 }
