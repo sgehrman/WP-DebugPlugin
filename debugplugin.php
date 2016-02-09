@@ -9,9 +9,74 @@ Description: Random Debug stuff
  */
 
 // Exit if accessed directly
-if( !defined( 'ABSPATH' ) ) {
+if (!defined('ABSPATH')) {
     exit;
 }
+
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+
+if (!class_exists('DebugPlugin')) {
+    class DebugPlugin
+    {
+
+        public function __construct()
+        {
+            $this->includes();
+        }
+
+        public function includes()
+        {
+            add_shortcode('lost_license_page_shortcode', array($this, 'lost_api_key_page'));
+        }
+
+        public function activation()
+        {
+            global $wpdb;
+
+            $lost_license_page_id = get_option('woocommerce_lost_license_page_id');
+
+            // Creates the lost license page with the right shortcode in it
+            $slug  = 'lost-license';
+            $found = $wpdb->get_var($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE post_name = %s LIMIT 1;", $slug));
+
+            if (empty($lost_license_page_id) || !$found) {
+                $lost_license_page = array(
+                    'post_title'   => _x('Lost License', 'Title of a page', 'debug_plugin'),
+                    'post_content' => '[lost_license_page_shortcode]',
+                    'post_status'  => 'publish',
+                    'post_type'    => 'page',
+                    'post_name'    => $slug,
+                );
+                $lost_license_page_id = (int) wp_insert_post($lost_license_page);
+                update_option('woocommerce_lost_license_page_id', $lost_license_page_id);
+            }
+        }
+
+        public function lost_api_key_page()
+        {
+            echo lostLicenseForm();
+
+            // License activate button was clicked
+            if (isset($_REQUEST['lost_license'])) {
+                $email = $_REQUEST['input_email'];
+
+                echo $email;
+            }
+        }
+    }
+
+    $GLOBALS['main_obj'] = new DebugPlugin();
+    global $main_obj;
+
+    // Hook into activation
+    register_activation_hook(__FILE__, array($main_obj, 'activation'));
+}
+
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
+// -------------------------------------------------------------------
 
 define('CREATION_SECRET_KEY', 'www');
 define('YOUR_VERIFICATION_SECRET_KEY', '56b458f3613364.08018088');
@@ -45,6 +110,30 @@ function license_management_page()
     showServerInfo();
 
     echo '</div>';
+}
+
+function createLostLicensePage()
+{
+    global $wpdb;
+
+    $lost_license_page_id = get_option('woocommerce_lost_license_page_id');
+
+    // Creates the lost license page with the right shortcode in it
+    $slug  = 'lost-license';
+    $found = $wpdb->get_var($wpdb->prepare("SELECT ID FROM {$wpdb->posts} WHERE post_name = %s LIMIT 1;", $slug));
+
+    if (empty($lost_license_page_id) || !$found) {
+        $lost_license_page = array(
+            'post_title'   => _x('Lost License', 'Title of a page', 'woocommerce-software-add-on'),
+            'post_content' => '[woocommerce_software_lost_license]',
+            'post_status'  => 'publish',
+            'post_type'    => 'page',
+            'post_name'    => $slug,
+        );
+        $lost_license_page_id = (int) wp_insert_post($lost_license_page);
+        update_option('woocommerce_lost_license_page_id', $lost_license_page_id);
+    }
+
 }
 
 function handleButtonClicks($lic)
@@ -96,7 +185,7 @@ function handleButtonClicks($lic)
 
 function logg($data)
 {
-var_dump($data);
+    var_dump($data);
 
     $result = recursiveLogg($data, "");
 
@@ -395,6 +484,26 @@ function checkForm()
             </p>
         </form>
         <hr/>
+HTML;
+    return $html;
+}
+
+function lostLicenseForm()
+{
+    $html = <<<HTML
+     <form action="" method="post">
+            <table class="form-table">
+                <tr>
+                    <th style="width:100px;"><label for="input_email">Email Address</label></th>
+                    <td ><input class="regular-text" type="text" id="input_email" name="input_email"  value=$licenseKey ></td>
+                </tr>
+            </table>
+            <p class="submit">
+                <input type="submit" name="lost_license" value="Check" class="button-primary" />
+            </p>
+        </form>
+        <hr/>
+
 HTML;
     return $html;
 }
