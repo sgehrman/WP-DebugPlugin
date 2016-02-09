@@ -495,7 +495,8 @@ HTML;
 
 function checkForm()
 {
-    $licenseKey = getSavedLicense();
+    $licenseKey     = getSavedLicense();
+    $lostLicenseURL = network_site_url('/') . "/lost-license";
 
     $html = <<<HTML
 
@@ -510,6 +511,8 @@ function checkForm()
                 <input type="submit" name="check_license" value="Check" class="button-primary" />
             </p>
         </form>
+
+        <a href="$lostLicenseURL" target="_blank">Lost your license?</a>
         <hr/>
 HTML;
     return $html;
