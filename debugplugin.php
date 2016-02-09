@@ -73,23 +73,19 @@ if (!class_exists('DebugPlugin')) {
                 if (sizeof($license_keys) > 0) {
                     $license_info = $license_keys[0];
 
-                    var_dump($license_info);
-
                     $licenseKey = $license_info->license_key;
 
-                  
                     $message = WC()->mailer()->wrap_message("Lost License", "We found it!  It wasn't lost, it was here all along...\n\n License: $licenseKey");
 
                     WC()->mailer()->send($email, "We found your license!", $message);
 
-                  
+                    echo "Licence found!  We sent an email to $email.";
+                    // var_dump($license_info);
 
                 } else {
-                   
-                   echo 'Email not found.  :(  Email support if needed';
-                }
 
-                echo $email;
+                    echo "Email not found. Email support if you need additional help.";
+                }
             }
         }
     }
@@ -160,7 +156,6 @@ function createLostLicensePage()
         $lost_license_page_id = (int) wp_insert_post($lost_license_page);
         update_option('woocommerce_lost_license_page_id', $lost_license_page_id);
     }
-
 }
 
 function handleButtonClicks($lic)
@@ -518,15 +513,18 @@ HTML;
 function lostLicenseForm()
 {
     $html = <<<HTML
+
+<H3>Enter the email address used when purchasing too look-up your license.</h3>
+
      <form action="" method="post">
             <table class="form-table">
                 <tr>
-                    <th style="width:100px;"><label for="input_email">Email Address</label></th>
+                    <th style="width:100px;"><label for="input_email">Email</label></th>
                     <td ><input class="regular-text" type="text" id="input_email" name="input_email"  value='steve@distantfutu.re' ></td>
                 </tr>
             </table>
             <p class="submit">
-                <input type="submit" name="lost_license" value="Check" class="button-primary" />
+                <input type="submit" name="lost_license" value="Email License" class="button-primary" />
             </p>
         </form>
         <hr/>
