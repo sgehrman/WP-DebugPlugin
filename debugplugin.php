@@ -34,7 +34,7 @@ if (!class_exists('DebugPlugin')) {
         {
             global $wpdb;
 
-            $lost_license_page_id = get_option('woocommerce_lost_license_page_id');
+            $lost_license_page_id = get_option('lost_license_page_id_option');
 
             // Creates the lost license page with the right shortcode in it
             $slug  = 'lost-license';
@@ -49,7 +49,7 @@ if (!class_exists('DebugPlugin')) {
                     'post_name'    => $slug,
                 );
                 $lost_license_page_id = (int) wp_insert_post($lost_license_page);
-                update_option('woocommerce_lost_license_page_id', $lost_license_page_id);
+                update_option('lost_license_page_id_option', $lost_license_page_id);
             }
         }
 
@@ -72,9 +72,15 @@ if (!class_exists('DebugPlugin')) {
                 if (sizeof($license_keys) > 0) {
                     $license_info = $license_keys[0];
 
-                    $licenseKey = $license_info->license_key;
+                    $message = "Hi $license_info->first_name $license_info->last_name,";
+                    $message .= "\n\nWe found it!  It wasn't lost, it was here all along...";
+                    $message .= "\n\nLicense: $license_info->license_key";
+                    $message .= "\nInstalls: $license_info->max_allowed_domains";
+                    $message .= "\nStatus: $license_info->lic_status";
+                    $message .= "\nCompany: $license_info->company_name";
+                    $message .= "\nPurchase Date: $license_info->date_created";
 
-                    $message = WC()->mailer()->wrap_message("Lost License", "We found it!  It wasn't lost, it was here all along...\n\n License: $licenseKey");
+                    $message = WC()->mailer()->wrap_message("Lost License", $message);
 
                     WC()->mailer()->send($email, "We found your license!", $message);
 
@@ -513,7 +519,7 @@ function lostLicenseForm()
 {
     $html = <<<HTML
 
-<H3>Enter the email address used when purchasing too look-up your license.</h3>
+<p><stromg>Enter the email address used when purchasing too look-up your license.</stong></p>
 
      <form action="" method="post">
             <table class="form-table">
@@ -526,8 +532,6 @@ function lostLicenseForm()
                 <input type="submit" name="lost_license" value="Email License" class="button-primary" />
             </p>
         </form>
-        <hr/>
-
 HTML;
     return $html;
 }
