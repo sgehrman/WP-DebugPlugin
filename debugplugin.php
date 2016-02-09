@@ -20,7 +20,6 @@ if (!defined('ABSPATH')) {
 if (!class_exists('DebugPlugin')) {
     class DebugPlugin
     {
-
         public function __construct()
         {
             $this->includes();
@@ -520,7 +519,7 @@ function lostLicenseForm()
             <table class="form-table">
                 <tr>
                     <th style="width:100px;"><label for="input_email">Email</label></th>
-                    <td ><input class="regular-text" type="text" id="input_email" name="input_email"  value='steve@distantfutu.re' ></td>
+                    <td ><input class="regular-text" type="text" id="input_email" name="input_email" placeholder='Email Address' value='' ></td>
                 </tr>
             </table>
             <p class="submit">
