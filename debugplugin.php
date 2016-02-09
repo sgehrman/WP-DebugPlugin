@@ -62,6 +62,30 @@ if (!class_exists('DebugPlugin')) {
             if (isset($_REQUEST['lost_license'])) {
                 $email = $_REQUEST['input_email'];
 
+                global $wpdb;
+
+                $tableName = $wpdb->prefix . "lic_key_tbl";
+
+                $license_keys = $wpdb->get_results("
+                SELECT * FROM {$tableName}
+                WHERE email = '{$email}'");
+
+                if (sizeof($license_keys) > 0) {
+
+                    var_dump($license_keys);
+
+                  
+                $message = 'yo';
+
+                wc_mail($email, __('Your license keys', 'woocommerce-software-add-on'), $message);
+
+                  
+
+                } else {
+                   
+                   echo 'Email not found.  :(  Email support if needed';
+                }
+
                 echo $email;
             }
         }
@@ -495,7 +519,7 @@ function lostLicenseForm()
             <table class="form-table">
                 <tr>
                     <th style="width:100px;"><label for="input_email">Email Address</label></th>
-                    <td ><input class="regular-text" type="text" id="input_email" name="input_email"  value=$licenseKey ></td>
+                    <td ><input class="regular-text" type="text" id="input_email" name="input_email"  value='steve@distantfutu.re' ></td>
                 </tr>
             </table>
             <p class="submit">
