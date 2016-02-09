@@ -59,7 +59,7 @@ if (!class_exists('DebugPlugin')) {
 
             // License activate button was clicked
             if (isset($_REQUEST['lost_license'])) {
-                $email = $_REQUEST['input_email'];
+                $email = trim($_REQUEST['input_email']);
 
                 global $wpdb;
 
@@ -480,7 +480,7 @@ function createForm()
                 </tr>
                 <tr>
                     <th style="width:100px;"><label for="input_installs">Install Count</label></th>
-                    <td ><input class="regular-text" type="number" id="input_installs" name="input_installs"  value='4' ></td>
+                    <td ><input class="regular-text" type="number" id="input_installs" name="input_installs"  value='3' ></td>
                 </tr>
             </table>
             <p class="submit">
