@@ -71,13 +71,16 @@ if (!class_exists('DebugPlugin')) {
                 WHERE email = '{$email}'");
 
                 if (sizeof($license_keys) > 0) {
+                    $license_info = $license_keys[0];
 
-                    var_dump($license_keys);
+                    var_dump($license_info);
+
+                    $licenseKey = $license_info->license_key;
 
                   
-                $message = 'yo';
+                    $message = WC()->mailer()->wrap_message("Lost License", "We found it!  It wasn't lost, it was here all along...\n\n License: $licenseKey");
 
-                wc_mail($email, __('Your license keys', 'woocommerce-software-add-on'), $message);
+                    WC()->mailer()->send($email, "We found your license!", $message);
 
                   
 
